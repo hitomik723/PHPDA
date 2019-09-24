@@ -15,7 +15,7 @@ library(data.table)
 library(tidyverse)
 library(survey)
 library(multcomp)
-setwd("~/Documents/MPH/Practicum/PHPDA")
+#setwd("~/Documents/MPH/Practicum/PHPDA")
 rm(list=ls())
 ```
 
@@ -38,7 +38,7 @@ sapply(df15, function(x) sum(is.na(x)))
 ```
 
 # Check for Proportion of those who did not meet the guidlines
-```{r}
+```{r, include = FALSE}
 ########## Unweighted
 #Asian
 n_notmet <- df15 %>% filter(X_RACE == 4) %>% filter(HADPAP2 == 2 | (HADPAP2 == 1 & (LASTPAP2 == 4 | LASTPAP2 == 5 | LASTPAP2 == 7)) | HADPAP2 == 7) %>% nrow()
@@ -85,8 +85,7 @@ df15$race <- as.factor(df15$race)
 table(df15$race)
 
 ########## Education
-#Originally coded as...
-#???
+#Originally coded as a six-level category
 
 #Now coding into...
 #education: 0 = High school & less, 1 = college & more
@@ -159,16 +158,6 @@ df15$cervical_sc <- ifelse(df15$HADPAP2 == 1 & (df15$LASTPAP2 == 1 | df15$LASTPA
 table(df15$cervical_sc)
 sum(is.na(df15$cervical_sc))
 
-### Checking the proportion of not receiving if it meets the proportion King county showed at the website
-#These proportions are unweighted
-not_recieving_asian <- df15 %>% filter(race == 3) %>% filter (cervical_sc == 0) %>% nrow()
-total_asian <- df15 %>% filter(race == 3) %>% filter(HADPAP2 == 1 | HADPAP2 == 2 | HADPAP2 == 7) %>% nrow()
-not_recieving_asian/total_asian
-
-not_recieving_white <- df15 %>% filter(race == 0) %>% filter (cervical_sc == 0) %>% nrow()
-total_white <- df15 %>% filter(race == 0) %>% filter(HADPAP2 == 1 | HADPAP2 == 2 | HADPAP2 == 7) %>% nrow()
-not_recieving_white/total_white
-
 ########## Exposure (Marriage status)
 #Originally coded as...
 #MARITAL == 1 = Married
@@ -221,13 +210,14 @@ sum(is.na(df15$mammogram))
 #EMPLOY1 == 9 = Refused
 
 #Now coding into...
-#Employed = 0 (1, 2, 5, 6)
-#Unemployed = 1 (3, 4, 8)
-#Retired & Refused will be NA
+#Employed = 1 (1, 2, 5, 6)
+#Unemployed = 0 (3, 4, 8)
+#Retired, Unable to work & Refused will be NA
+###? Retired can be excluded? CHECK literature
 
-df15$employment <- ifelse(df15$EMPLOY1 == 1 | df15$EMPLOY1 == 2 | df15$EMPLOY1 == 5 | df15$EMPLOY1 == 6, 0, NA)
+df15$employment <- ifelse(df15$EMPLOY1 == 1 | df15$EMPLOY1 == 2 | df15$EMPLOY1 == 5 | df15$EMPLOY1 == 6, 1, NA)
 
-df15$employment <- ifelse(df15$EMPLOY1 == 3 | df15$EMPLOY1 == 4 | df15$EMPLOY1 == 8, 1, df15$employ)
+df15$employment <- ifelse(df15$EMPLOY1 == 3 | df15$EMPLOY1 == 4 | df15$EMPLOY1 == 8, 0, df15$employment)
 
 table(df15$employment)
 sum(is.na(df15$employment))
@@ -240,41 +230,52 @@ sum(is.na(df15$employment))
 #HLTHPLN1 == 9 = Refused
 
 #Now coding into...
-#Have healthcare = 0
-#Don't have healthcare = 1
+#Have healthcare = 1
+#Don't have healthcare = 0
 #Don't know/Not sure & Refused will be NA
 
-df15$healthcare <- ifelse(df15$HLTHPLN1 == 1, 0, NA)
-df15$healthcare <- ifelse(df15$HLTHPLN1 == 2, 1, df15$healthcare)
+df15$healthcare <- ifelse(df15$HLTHPLN1 == 1, 1, NA)
+df15$healthcare <- ifelse(df15$HLTHPLN1 == 2, 0, df15$healthcare)
 
 table(df15$healthcare)
 sum(is.na(df15$healthcare))
 ```
 
-### Population characteristics (Weighted)
+```{r, inclide = FALSE}
+### Checking the proportion of not receiving if it meets the proportion King county showed at the website
+#These proportions are unweighted
+not_recieving_asian <- df15 %>% filter(race == 3) %>% filter (cervical_sc == 0) %>% nrow()
+total_asian <- df15 %>% filter(race == 3) %>% filter(HADPAP2 == 1 | HADPAP2 == 2 | HADPAP2 == 7) %>% nrow()
+not_recieving_asian/total_asian
+
+not_recieving_white <- df15 %>% filter(race == 0) %>% filter (cervical_sc == 0) %>% nrow()
+total_white <- df15 %>% filter(race == 0) %>% filter(HADPAP2 == 1 | HADPAP2 == 2 | HADPAP2 == 7) %>% nrow()
+not_recieving_white/total_white
+```
+
+### Table 1.Population characteristics (Weighted)
 ### Create survey design
 ```{r}
+###narrowing down to only those who are under 65
+df15 <- df15 %>% filter (age == 0 | age == 1)
+
 options(survey.lonely.psu = "adjust")
 design <- svydesign(data = df15, id=~X_PSU, strata = ~strata, weight = ~weight, nest = TRUE)
 
 ########## Sample size
-table(df15$X_RACE)
-#X_RACE: 1 = White, 2 = Black, 4 = Asian, 8 = Hispanic
-
 table(df15$race) #Sample size (unweighted)
 #race: White = 1, Black = 2, Hispanic = 3, Asian = 0, #Others = 4
+  
 prop.table(svytable(~race, design = design)) #Weighted proportion
 
 ########## Population characteristics
-##age_binary: 0 = 18 -29 years old 1 = 30 - 64 years ~
+##age: 0 = 18 -29 years old 1 = 30 - 64 years old
 prop.table(svytable(~age, subset(design, race == 0))) #Asian
 prop.table(svytable(~age, subset(design, race == 1))) #White
 prop.table(svytable(~age, subset(design, race == 2))) #Black
 prop.table(svytable(~age, subset(design, race == 3))) #Hispanic
 prop.table(svytable(~age, subset(design, race == 4))) #Other
 
-
-  
 ##education: High school & less = 0, college & more = 1
 prop.table(svytable(~education, subset(design, race == 0))) #Asian
 prop.table(svytable(~education, subset(design, race == 1))) #White
@@ -282,20 +283,40 @@ prop.table(svytable(~education, subset(design, race == 2))) #Black
 prop.table(svytable(~education, subset(design, race == 3))) #Hispanic
 prop.table(svytable(~education, subset(design, race == 4))) #Other
 
-##marriage: #Never married = 0, Married & Marriage experience & Unmarried couple = 1
+##marriage: Never married = 0, Married & Marriage experience & Unmarried couple = 1
 prop.table(svytable(~marriage, subset(design, race == 0))) #Asian
 prop.table(svytable(~marriage, subset(design, race == 1))) #White
 prop.table(svytable(~marriage, subset(design, race == 2))) #Black
 prop.table(svytable(~marriage, subset(design, race == 3))) #Hispanic
 prop.table(svytable(~marriage, subset(design, race == 4))) #Other
 
+##employment: Employed = 1, Unemployed = 0
+prop.table(svytable(~employment, subset(design, race == 0))) #Asian
+prop.table(svytable(~employment, subset(design, race == 1))) #White
+prop.table(svytable(~employment, subset(design, race == 2))) #Black
+prop.table(svytable(~employment, subset(design, race == 3))) #Hispanic
+prop.table(svytable(~employment, subset(design, race == 4))) #Other
+
+##healthcare: Have healthcare = 1, Don't have health care = 0
+prop.table(svytable(~healthcare, subset(design, race == 0))) #Asian
+prop.table(svytable(~healthcare, subset(design, race == 1))) #White
+prop.table(svytable(~healthcare, subset(design, race == 2))) #Black
+prop.table(svytable(~healthcare, subset(design, race == 3))) #Hispanic
+prop.table(svytable(~healthcare, subset(design, race == 4))) #Other
+```
+
+### Table 2.
+```{r}
 ########## Weighted Prevalence of receiving a screening within three years
 prop.table(svytable(~cervical_sc, subset(design, race == 0))) #Asian
 prop.table(svytable(~cervical_sc, subset(design, race == 1))) #White
 prop.table(svytable(~cervical_sc, subset(design, race == 2))) #Black
 prop.table(svytable(~cervical_sc, subset(design, race == 3))) #Hispanic
 prop.table(svytable(~cervical_sc, subset(design, race == 4))) #Other
+```
 
+### Table 3.
+```{r}
 ########## Weighted Prevalence of receiving a screening within three years by marriage status
 prop.table(svytable(~cervical_sc, subset(design, race == 0 & marriage == 0))) #Asian unmarried
 prop.table(svytable(~cervical_sc, subset(design, race == 0 & marriage == 1))) #Asian Married
@@ -314,7 +335,7 @@ prop.table(svytable(~cervical_sc, subset(design, race == 4 & marriage == 1)))
 ```
 
 ### Population characteristics (Unweighted)
-```{r}
+```{r, include = FALSE}
 ########## Population characteristics
 ##age_binary: 0 = ~34 years old 1 = 35 years ~
 #Asian
