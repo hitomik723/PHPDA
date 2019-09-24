@@ -1,0 +1,87 @@
+---
+title: "cleaning_final_analysis_phpda"
+author: "Hitomi Kariya"
+date: "9/5/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(foreign)
+library(data.table)
+library(tidyverse)
+library(survey)
+setwd("~/Documents/MPH/Practicum/Data_Analysis")
+rm(list=ls())
+```
+
+# Import data
+```{r}
+############DO NOT RUN THE WHOLE CHUNK
+# RUN THE 1ST COAD (IMPORT THE DATA)!
+
+df15 = read.xport("LLCP2015.XPT")
+#If you can't load the data, change the title.
+#It doesn't work if the title has /
+
+colnames(df15)
+
+cols <- c("X_PSU", "X_STATE", "X_LLCPWT", "HPVADVC2", "HADMAM", "HOWLONG", "HADPAP2", "LASTPAP2", "QSTLANG", "MARITAL", "SEX", "EDUCA", "EMPLOY1", "INCOME2", "X_RACE", "X_AGE_G", "X_AGEG5YR", "X_STSTR", "HLTHPLN1")
+ 
+df15_sub <-df15[df15$X_STATE %in% 53, cols] 
+
+colnames(df15_sub)
+head(df15_sub)
+dim(df15_sub)
+sum(is.na(df15_sub$HADPAP2))
+setnames(df15_sub, old=c("X_LLCPWT", "X_STSTR"), new=c("weight", "strata"))
+ 
+rm(list=c('df15'))
+```
+
+# Convert data to csv
+```{r}
+write.csv(df15_sub, "df15_sub.csv", row.names = FALSE)
+```
+
+###? Complete data only?
+```{r}
+#complete <- c("HPVADVC2", "HADMAM", "HOWLONG", "HADPAP2", "LASTPAP2", "QSTLANG") #"HPVADVC2" doesn't have any values (all NA)
+
+comp <- c("HADMAM", "HOWLONG", "HADPAP2", "LASTPAP2", "QSTLANG") #Exclude "HPVADVC2"
+
+df15_comp <- df15_sub[complete.cases(df15_sub[,comp]),]
+#setnames(df15_comp, old=c("X_LLCPWT", "X_STSTR"), new=c("weight", "strata"))
+View(df15_comp)
+df15_comp$HPVADVC2 = NULL #delete the column "HPVADVC2"
+
+###Another way to delete the NA cells
+df15_complete <- df15_sub
+(sum1 <- sum(!is.na(df15_complete$HOWLONG)))
+(ind1 <- !is.na(df15_complete$HOWLONG))
+df15_complete_1 <- df15_complete[which(ind1),]
+ 
+(sum2 <- sum(!is.na(df15_complete_1$LASTPAP2)))
+(ind2 <- !is.na(df15_complete_1$LASTPAP2))
+df15_complete_2 <- df15_complete_1[which(ind2),]
+ 
+(sum3 <- sum(!is.na(df15_complete_2$HADPAP2)))
+(ind3 <- !is.na(df15_complete_2$HADPAP2))
+df15_complete_3 <- df15_complete_2[which(ind3),]
+ 
+(sum4 <- sum(!is.na(df15_complete_3$QSTLANG)))
+(ind4 <- !is.na(df15_complete_3$QSTLANG))
+df15_complete_4 <- df15_complete_3[which(ind4),]
+ 
+(sum5 <- sum(!is.na(df15_complete_4$HADMAM)))
+(ind5 <- !is.na(df15_complete_4$HADMAM))
+df15_complete_5 <- df15_complete_4[which(ind5),]
+```
+
+# Convert data to csv
+```{r}
+write.csv(df15_comp, "df15_comp.csv", row.names = FALSE)
+```
