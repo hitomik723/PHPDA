@@ -343,7 +343,8 @@ exp(confint(ratio_interaction))
 #glht function doesn't work with as.factor
 ###Look at the Slide11_BIOST513 page 15
 
-###Get estimates
+###Get estimates of PR comparing the married to the unmarried among each racial/ethnic group
+
 b0 <- -2.0096 #coef: intercept
 b1 <- 1.5825 #coef: (marriage)1
 
