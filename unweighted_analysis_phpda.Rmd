@@ -39,6 +39,7 @@ df15$HPVADVC2 <- NULL #Delete since it has only NA
 sapply(df15, function(x) sum(is.na(x)))
 ```
 
+##### UNWEIGHTED #####
 # Check for Proportion of those who did not meet the guidlines
 ```{r, include = FALSE}
 ########## Unweighted
@@ -243,6 +244,7 @@ table(df15$healthcare)
 sum(is.na(df15$healthcare))
 ```
 
+##### UNWEIGHTED #####
 ```{r, inclide = FALSE}
 ### Checking the proportion of not receiving if it meets the proportion King county showed at the website
 #These proportions are unweighted
@@ -336,6 +338,7 @@ prop.table(svytable(~cervical_sc, subset(design, race == 4 & marriage == 0)))
 prop.table(svytable(~cervical_sc, subset(design, race == 4 & marriage == 1)))
 ```
 
+##### UNWEIGHTED #####
 ### Population characteristics (Unweighted)
 ```{r, include = FALSE}
 ########## Population characteristics
@@ -417,7 +420,7 @@ age_0 <- df15 %>% filter(race == 4) %>% filter(marriage == 0) %>% nrow()
 age_total <- df15 %>% filter(race == 4) %>% filter(marriage == 0|marriage == 1) %>% nrow()
 age_0/age_total
 
-########## Weighted Prevalence of receiving a screening within three years
+########## Unweighted Prevalence of receiving a screening within three years
 #Asian
 age_0 <- df15 %>% filter(race == 0) %>% filter(cervical_sc == 1) %>% nrow()
 age_total <- df15 %>% filter(race == 0) %>% filter(cervical_sc == 0|cervical_sc == 1) %>% nrow()
@@ -443,7 +446,7 @@ age_0 <- df15 %>% filter(race == 4) %>% filter(cervical_sc == 1) %>% nrow()
 age_total <- df15 %>% filter(race == 4) %>% filter(cervical_sc == 0|cervical_sc == 1) %>% nrow()
 age_0/age_total
 
-########## Weighted Prevalence of receiving a screening within three years by marriage status
+########## Unweighted Prevalence of receiving a screening within three years by marriage status
 ### Unmarried
 #Asian
 age_0 <- df15 %>% filter(race == 0) %>% filter(marriage == 0) %>% filter(cervical_sc == 1) %>% nrow()
@@ -498,7 +501,7 @@ age_0/age_total
 
 ```
 
-# Logistic Regression (Race as an EM)
+# Logistic Regression
 ```{r}
 df15$marriage <- as.factor(df15$marriage)
 df15$education <- as.factor(df15$education)
