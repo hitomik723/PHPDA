@@ -15,14 +15,18 @@ library(data.table)
 library(tidyverse)
 library(survey)
 library(multcomp)
-setwd("~/Documents/MPH/Practicum/Data_Analysis")
+setwd("~/Documents/MPH/Practicum/PHPDA")
 rm(list=ls())
 ```
 
 ### Import df15_sub
 ```{r}
 #df15_sub = a subset of data filtered to the related variables in Wasington state
-df15 <- read.csv("df15_sub.csv")
+
+df15 <- read.csv("https://raw.githubusercontent.com/HitomiKariya/PHPDA/master/df15_sub.csv?token=ALVLXKGL25TJOKXT5AA7VHK5SK7N2")
+
+#when not conneted to the internet
+#df15 <- read.csv("df15_sub.csv")
 colnames(df15)
 head(df15)
 df15$HPVADVC2 <- NULL #Delete since it has only NA
