@@ -312,34 +312,23 @@ design <- svydesign(data = df15, id=~X_PSU, strata = ~strata, weight = ~weight, 
 ratio <- svyglm(cervical_sc ~ as.factor(marriage) + as.factor(education) + as.factor(age) + as.factor(race) + as.factor(employment) + as.factor(healthcare), design = design, family = binomial)
 
 summary(ratio)
+
+###Get estimates
 exp(coef(ratio))
+#Each estimate of the each racial group corresponds to each of the as.factor(race)1~4
+
 exp(confint(ratio))#When ref = white, OR of receving a screening within 3 years comparing Asian to Whites is 0.56,
 #where Asians have 44% lower odds of receiving.
 
 # Likelihood ratio test
-nested <- svyglm(cervical_sc ~ as.factor(marriage) + as.factor(education) + as.factor(age), design = design, family = binomial)
+#Look at Slides11_BIOST513_050619 @page 30
+nested <- svyglm(cervical_sc ~ as.factor(marriage) + as.factor(education) + as.factor(age) + as.factor(employment) + as.factor(healthcare), design = design, family = binomial)
 
 anova(nested, ratio, test = "Chisq", method = "LRT")
 #Since the p-value is 2.4664e-08, there is an association between screening behaviro and race.
 
 ########## Aim2
 #Interaction marriage*race?
-
-#not including employment and healthcare
-#kesu
-kesu <- svyglm(cervical_sc ~ as.factor(marriage) + as.factor(education) + as.factor(age) + as.factor(race) +  as.factor(marriage)*as.factor(race), design = design, family = binomial)
-
-summary(kesu)
-confint(kesu)
-
-exp(coef(kesu))
-exp(confint(kesu))
-
-exp(-1.1245)
--1.1245 + 1.8968
-exp(0.7723)
-#kesu
-
 #including employment and healthcare
 ratio_interaction <- svyglm(cervical_sc ~ as.factor(marriage) + as.factor(education) + as.factor(age) + as.factor(race) + as.factor(employment) + as.factor(healthcare) + as.factor(marriage)*as.factor(race), design = design, family = binomial)
 
@@ -354,24 +343,24 @@ exp(confint(ratio_interaction))
 #glht function doesn't work with as.factor
 ###Look at the Slide11_BIOST513 page 15
 
-#Get estimate
-b0 <- -0.9310 #coef: intercept
-b1 <- 1.8671 #coef: (marriage)1
+###Get estimates
+b0 <- -2.0096 #coef: intercept
+b1 <- 1.5825 #coef: (marriage)1
 
-b4_white <- 1.3409 #coef: (race)1
-b7_white <- -1.2448 #coef: (marriage)1:(race)1
+b4_white <- 1.2742 #coef: (race)1
+b7_white <- -1.1221 #coef: (marriage)1:(race)1
 
-b4_black <- 3.0264 
-b7_black <- -2.3243
+b4_black <- 2.7211 
+b7_black <- -1.8711
 
-b4_hispanic <- 1.3290
-b7_hispanic <- -0.5110
+b4_hispanic <- 1.2500
+b7_hispanic <- -0.4987
 
-b4_other <- 1.0405
-b7_other <- -0.9758
+b4_other <- 0.9962
+b7_other <- -1.0221
 
 #Asian
-exp(b1) #Exp(coef: intercept + (marriage)1)
+exp(b1) #Exp(coef: (marriage)1)
 
 #White
 exp(b1 + b7_white)
@@ -386,16 +375,52 @@ exp(b1 + b7_hispanic)
 exp(b1 + b7_other)
 
 # Likelihood ratio test
-nested <- svyglm(cervical_sc ~ as.factor(marriage) + as.factor(education) + as.factor(age_binary) + as.factor(race), design = design, family = binomial)
+nested <- svyglm(cervical_sc ~ as.factor(marriage) + as.factor(education) + as.factor(age) + as.factor(race) + as.factor(employment) + as.factor(healthcare), design = design, family = binomial)
 
 anova(nested, ratio_interaction, test = "Chisq", method = "LRT")
-# Since the p-value is p= 0.084625, there is no difference in the association of the screening behavior and marriage status by race.
+# Since the p-value is p= 0.055804, there is no statistical difference in the association of the screening behavior and marriage status by race.
+
+### Get 95% CI
+b1_low <- 0.59987949 #confint: (marriage)1 2.5%
+b1_high <- 2.56506157 #confint: (marriage)1 97.5%
+
+b7_white_low <- -2.11928411 #confint: (marriage)1:(race)1 2.5%
+b7_white_high <- -0.12498297 #confint: (marriage)1:(race)1 97.5%
+
+b7_black_low <- -3.82144443
+b7_black_high <- 0.07928532
+
+b7_hispanic_low <- -1.69282076
+b7_hispanic_high <- 0.69546403
+
+b7_other_low <- -2.27427109
+b7_other_high <- 0.22999562
+
+#Asian
+exp(b1_low) #Exp(confint: (marriage)1 2.5%)
+exp(b1_high) #Exp(confint: (marriage)1 97.5%)
+
+#White
+exp(b1_low + b7_white_low) #Exp(confint: (marriage)1 2.5% + confint: (marriage)1:(race)1 2.5%)
+exp(b1_high + b7_white_high) #Exp(confint: (marriage)1 97.5% + confint: (marriage)1:(race)1 97.5%)
+
+#Black
+exp(b1_low + b7_black_low)
+exp(b1_high + b7_black_high)
+
+#Hispanic
+exp(b1_low + b7_hispanic_low)
+exp(b1_high + b7_hispanic_high)
+
+#Other
+exp(b1_low + b7_other_low)
+exp(b1_high + b7_other_high)
 ```
 
 # Logistic Regression (Only for Asian population)
 ```{r}
 ###Only for Asian population (Age as Binary)
-df15_asian <- df15 %>% filter (X_RACE == 4)
+df15_asian <- df15 %>% filter (X_RACE == 4) %>% filter (age == 0 | age == 1)
 head(df15_asian)
 options(survey.lonely.psu = "adjust")
 design_asian <- svydesign(data = df15_asian, id=~X_PSU, strata = ~strata, weight = ~weight, nest = TRUE)
