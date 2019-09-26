@@ -602,7 +602,7 @@ anova(nested, ratio_interaction, test = "Chisq", method = "LRT")
 
 # Logistic Regression (Only for Asian population)
 ```{r}
-###Only for Asian population (Age as Binary)
+###Only for Asian population (Age as Binary(exclude 64+ years old))
 df15_asian <- df15 %>% filter (X_RACE == 4)
 head(df15_asian)
 options(survey.lonely.psu = "adjust")
