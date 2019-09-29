@@ -420,7 +420,7 @@ exp(b1_high + b7_other_high)
 
 # Logistic Regression (Only for Asian population)
 ```{r}
-###Only for Asian population (Age as Binary)
+###Only for Asian population (Age as Binary those who are 64+ only)
 df15_asian <- df15 %>% filter (X_RACE == 4) %>% filter (age == 0 | age == 1)
 head(df15_asian)
 options(survey.lonely.psu = "adjust")
